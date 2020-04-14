@@ -20,6 +20,7 @@ PGLITE_DB_PGDATA = os.path.join(PGLITE_DB_DIR, "pg_data")
 # don't export tables in _tempus_import
 PGLITE_EXTRA_DUMP_OPTIONS = ["-N", "_tempus_import"]
 PGLITE_DEFAULT_PORT = "55432"
+PG_VERSIONS = ["9.3", "9.4", "9.5", "9.6", "10", "11", "12"]
 
 def die(msg):
     raise RuntimeError(msg)
@@ -61,22 +62,14 @@ def check_cluster():
 def find_pg_ctl():
     """Find the pg_ctl executable in common places"""
     if sys.platform.startswith('linux'):
-        paths = ['/usr/lib/postgresql/11/bin/pg_ctl',
-                 '/usr/lib/postgresql/10/bin/pg_ctl',
-                 '/usr/lib/postgresql/9.6/bin/pg_ctl',
-                 '/usr/lib/postgresql/9.5/bin/pg_ctl',
-                 '/usr/lib/postgresql/9.4/bin/pg_ctl',
-                 '/usr/lib/postgresql/9.3/bin/pg_ctl']
+        paths = ['/usr/lib/postgresql/{0}/bin/pg_ctl'.format(v) for v in PG_VERSIONS]
         paths += [os.path.join(path, 'pg_ctl') for path in os.environ['PATH'].split(':')]
     elif sys.platform.startswith('freebsd'):
         paths = [sys.exec_prefix+'/bin/pg_ctl']
     else: # Windows
         paths = [ os.path.join(os.environ["OSGEO4W_ROOT"], "bin", "pg_ctl.exe"),
-                  os.path.join(os.environ["ProgramFiles"], "PostgreSQL", "11", "bin", "pg_ctl.exe"),
-                  os.path.join(os.environ["ProgramFiles"], "PostgreSQL", "10", "bin", "pg_ctl.exe"),
-                  os.path.join(os.environ["ProgramFiles"], "PostgreSQL", "9.6", "bin", "pg_ctl.exe"),
-                  os.path.join(os.environ["ProgramFiles"], "PostgreSQL", "9.5", "bin", "pg_ctl.exe"),
-                  os.path.join(os.environ["ProgramFiles"], "PostgreSQL", "9.4", "bin", "pg_ctl.exe")]
+                  *[os.path.join(os.environ["ProgramFiles"], "PostgreSQL", v, "bin", "pg_ctl.exe") for v in PG_VERSIONS]
+                ]
     for p in paths:
         if os.path.isfile(p):
             #print("Found pg_ctl at " + p)
